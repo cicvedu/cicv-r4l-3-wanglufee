@@ -163,4 +163,9 @@ config SAMPLE_RUST_SELFTESTS
 
 	  If unsure, say N.
 
+config SAMPLE_RUST_HELLO
+	tristate "Print Hello World in Rust"
+	help
+	  This build a module which can print hello world.
+
 endif # SAMPLES_RUST
