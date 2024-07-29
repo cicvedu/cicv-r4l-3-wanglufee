@@ -2,7 +2,7 @@
 
 //! Rust character device sample.
 
-use core::result::Result::Err;
+use core::result::Result::{Err, Ok};
 
 use kernel::prelude::*;
 use kernel::sync::Mutex;
@@ -40,11 +40,26 @@ impl file::Operations for RustFile {
     }
 
     fn write(_this: &Self,_file: &file::File,_reader: &mut impl kernel::io_buffer::IoBufferReader,_offset:u64,) -> Result<usize> {
-        Err(EPERM)
+        let mut vec = _this.inner.lock();
+        let len = if _reader.len() < vec.len() {
+            _reader.len()
+        } else {
+            vec.len()
+        };
+        _reader.read_slice(&mut vec[..len])?;
+        Ok(len)
     }
 
     fn read(_this: &Self,_file: &file::File,_writer: &mut impl kernel::io_buffer::IoBufferWriter,_offset:u64,) -> Result<usize> {
-        Err(EPERM)
+        let offset = _offset as usize;
+        let vec = _this.inner.lock();
+        let len = if _writer.len() < vec.len().saturating_sub(offset) {
+            _writer.len()
+        } else {
+            vec.len().saturating_sub(offset)
+        };
+        _writer.write_slice(&vec[..len])?;
+        Ok(len)
     }
 }
 
